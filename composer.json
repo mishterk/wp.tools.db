@@ -13,7 +13,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Mishterk\\WP\\Tools\\DB": "src"
+      "Mishterk\\WP\\Tools\\DB\\": "src"
     }
   },
   "minimum-stability": "dev"
