@@ -20,8 +20,8 @@ defined( 'PHPUNIT_RUNNING' ) or define( 'PHPUNIT_RUNNING', true );
  */
 function _manually_load_plugin() {
 	//require dirname( dirname( __FILE__ ) ) . '/wp-tools-db.php';
-	require dirname( dirname( __FILE__ ) ) . '/src/class-adaptor.php';
-	require dirname( dirname( __FILE__ ) ) . '/src/class-model-base.php';
+	require dirname( dirname( __FILE__ ) ) . '/src/Adaptor.php';
+	require dirname( dirname( __FILE__ ) ) . '/src/ModelBase.php';
 	require 'resources/class-test-model.php';
 	require 'resources/class-test-model-composite-key.php';
 	require 'resources/class-factory.php';

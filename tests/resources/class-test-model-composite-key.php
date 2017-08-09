@@ -1,7 +1,7 @@
 <?php
 
 
-class Test_Model_Composite_key extends \Mishterk\WP\Tools\DB\Model {
+class Test_Model_Composite_key extends \Mishterk\WP\Tools\DB\ModelBase {
 
 
 	public $drop_on_deactivation = true;

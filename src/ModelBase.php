@@ -4,7 +4,7 @@
 namespace Mishterk\WP\Tools\DB;
 
 
-abstract class Model {
+abstract class ModelBase {
 
 
 	/** @var \wpdb */
