@@ -1,7 +1,19 @@
 {
   "name": "mishterk/wp-tools-db",
   "description": "Some DB tools for WP",
+  "authors": [
+    {
+      "name": "Phil Kurth",
+      "email": "phil.kurth@cyclingtips.com.au"
+    }
+  ],
   "require": {
     "php": "^5.6 || ^7.0"
-  }
+  },
+  "autoload": {
+    "psr-4": {
+      "Mishterk\\WP\\Tools\\DB": "src"
+    }
+  },
+  "minimum-stability": "dev"
 }
