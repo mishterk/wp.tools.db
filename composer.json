@@ -1,0 +1,7 @@
+{
+  "name": "mishterk/wp-tools-db",
+  "description": "Some DB tools for WP",
+  "require": {
+    "php": "^5.6 || ^7.0"
+  }
+}
