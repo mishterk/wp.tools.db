@@ -22,7 +22,7 @@ To use, extend `\Mishterk\WP\Tools\DB\Model` with your own model and implement r
 
 See the following test classes for a look at how your custom class will look;
 
-`tests/resources/class-test-model.php`
+`tests/resources/class-test-model.php`  
 `tests/resources/class-test-model-composite-key.php`
 
 Currently, the class will set itself up with the necessary dependencies (`$wpdb` and a built in adaptor), but these can
