@@ -5,8 +5,8 @@ namespace Mishterk\WP\Tools\DB;
 
 
 /**
- * Class WP_Adaptor
- * @package Plugin\TestPlugin\DB
+ * Class Adaptor
+ * @package Mishterk\WP\Tools\DB
  *
  * This adaptor serves as a replaceable object which we can test around. Any direct WP functions required for DB
  * operations should go in here.
