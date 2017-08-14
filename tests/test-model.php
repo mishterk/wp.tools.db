@@ -199,7 +199,7 @@ class ModelTest extends WP_UnitTestCase {
 		$this->assertFalse( $model->validate_inbound_primary_key( [ 'wrong_key' => 1, 'post_id' => 2 ] ) );
 	}
 
-	function test_get_works_with_single_key() {
+	function test_find_works_with_single_key() {
 		$model  = ModelFactory::getTestModel();
 		$data   = [
 			'user_id' => 4,
@@ -208,11 +208,11 @@ class ModelTest extends WP_UnitTestCase {
 		];
 		$result = $model->insert( $data );
 		$this->assertTrue( $result, 'Failed to insert initial data' );
-		$this->assertTrue( is_array( $model->get( 4 ) ) );
-		$this->assertFalse( $model->get( 5 ) );
+		$this->assertTrue( is_array( $model->find( 4 ) ) );
+		$this->assertFalse( $model->find( 5 ) );
 	}
 
-	function test_get_works_with_composite_key() {
+	function test_find_works_with_composite_key() {
 		$model  = ModelFactory::getTestModelCompositeKey();
 		$data   = [
 			'user_id' => 4,
@@ -221,14 +221,14 @@ class ModelTest extends WP_UnitTestCase {
 		];
 		$result = $model->insert( $data );
 		$this->assertTrue( $result, 'Failed to insert initial data' );
-		$this->assertFalse( @$model->get( 4 ) );
-		$this->assertTrue( is_array( $model->get( [ 4, 3 ] ) ) );
-		$this->assertTrue( is_array( $model->get( [ 'user_id' => 4, 'post_id' => 3 ] ) ) );
-		$this->assertTrue( is_array( $model->get( [ 'post_id' => 3, 'user_id' => 4 ] ) ) );
+		$this->assertFalse( @$model->find( 4 ) );
+		$this->assertTrue( is_array( $model->find( [ 4, 3 ] ) ) );
+		$this->assertTrue( is_array( $model->find( [ 'user_id' => 4, 'post_id' => 3 ] ) ) );
+		$this->assertTrue( is_array( $model->find( [ 'post_id' => 3, 'user_id' => 4 ] ) ) );
 	}
 
 
-	function test_where() {
+	function test_find_where() {
 		$model  = ModelFactory::getTestModelCompositeKey();
 		$data   = [
 			'user_id' => 4,
@@ -251,13 +251,13 @@ class ModelTest extends WP_UnitTestCase {
 		];
 		$result = $model->insert( $data );
 		$this->assertTrue( $result, 'Failed to insert initial data' );
-		$this->assertCount( 2, $model->where( [ 'user_id' => 4 ] ) );
-		$this->assertCount( 2, $model->where( [ 'post_id' => 4 ] ) );
-		$this->assertCount( 1, $model->where( [ 'post_id' => 4 ], 1 ) );
-		$this->assertCount( 0, $model->where( [ 'post_id' => 40 ] ) );
+		$this->assertCount( 2, $model->find_where( [ 'user_id' => 4 ] ) );
+		$this->assertCount( 2, $model->find_where( [ 'post_id' => 4 ] ) );
+		$this->assertCount( 1, $model->find_where( [ 'post_id' => 4 ], 1 ) );
+		$this->assertCount( 0, $model->find_where( [ 'post_id' => 40 ] ) );
 	}
 
-	function test_delete() {
+	function test_delete_where() {
 		$model  = ModelFactory::getTestModelCompositeKey();
 		$data   = [
 			'user_id' => 4,
@@ -273,8 +273,8 @@ class ModelTest extends WP_UnitTestCase {
 		];
 		$result = $model->insert( $data );
 		$this->assertTrue( $result, 'Failed to insert initial data' );
-		$this->assertFalse( $model->delete( [ 'user_id' => 100 ] ) );
-		$this->assertTrue( $model->delete( [ 'user_id' => 4 ] ) );
+		$this->assertFalse( $model->delete_where( [ 'user_id' => 100 ] ) );
+		$this->assertTrue( $model->delete_where( [ 'user_id' => 4 ] ) );
 		$this->assertSame( 0, $model->count() );
 	}
 

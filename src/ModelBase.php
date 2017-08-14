@@ -317,7 +317,7 @@ abstract class ModelBase {
 
 
 	/**
-	 * Gets a row based on its primary key. If the model has a single key, a single value is expected. If the model's
+	 * Finds a single row based on its primary key. If the model has a single key, a single value is expected. If the model's
 	 * primary key is a composite, an array with the exact same number of values is expected. This will also accept
 	 * an associative array. @see $this->primary_key()
 	 *
@@ -325,7 +325,7 @@ abstract class ModelBase {
 	 *
 	 * @return array|bool|null Array representing the row on success; bool FALSE on failure; NULL of row could not be found.
 	 */
-	public function get( $key_or_array ) {
+	public function find( $key_or_array ) {
 		if ( ! $this->validate_inbound_primary_key( $key_or_array ) ) {
 			trigger_error( 'Error: arguments provided to $this->get() were incorrect. Check the primary key/s required for this model.' );
 
@@ -416,13 +416,13 @@ abstract class ModelBase {
 
 
 	/**
-	 * Gets multiple rows based on provided associative array
+	 * Finds multiple rows based on provided associative array
 	 *
 	 * @param array $args
 	 *
 	 * @return array|bool
 	 */
-	public function where( Array $args, $limit = 0 ) {
+	public function find_where( Array $args, $limit = 0 ) {
 		if ( ! $this->is_associative_array( $args ) ) {
 			return false;
 		}
@@ -448,6 +448,10 @@ abstract class ModelBase {
 //	public function get_column_by() {
 //	}
 
+// TODO deletes single row based on primary key (see find method for foundation)
+//public function delete( ){
+//}
+
 
 	/**
 	 * Deletes rows based on provided associative array
@@ -456,7 +460,7 @@ abstract class ModelBase {
 	 *
 	 * @return bool
 	 */
-	public function delete( Array $args ) {
+	public function delete_where( Array $args ) {
 		if ( ! $this->is_associative_array( $args ) ) {
 			return false;
 		}
