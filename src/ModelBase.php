@@ -161,7 +161,8 @@ abstract class ModelBase {
 	 * @return bool
 	 */
 	public function insert( Array $data ) {
-		$data    = $this->normalize_data( $data );
+		$data    = $this->set_missing_defaults( $data );
+		$data    = $this->remove_extraneous_fields( $data );
 		$formats = $this->get_ordered_formats( $data );
 
 		return (bool) $this->db->insert( $this->full_table_name(), $data, $formats );
@@ -177,7 +178,8 @@ abstract class ModelBase {
 	 * @return bool
 	 */
 	public function update( Array $data, Array $where ) {
-		$data    = $this->normalize_data( $data );
+		$data    = $this->set_missing_defaults( $data );
+		$data    = $this->remove_extraneous_fields( $data );
 		$formats = $this->get_ordered_formats( $data );
 
 		return (bool) $this->db->update( $this->full_table_name(), $data, $where, $formats );
@@ -192,7 +194,8 @@ abstract class ModelBase {
 	 * @return bool
 	 */
 	public function insert_or_update( Array $data ) {
-		$data        = $this->normalize_data( $data );
+		$data        = $this->set_missing_defaults( $data );
+		$data        = $this->remove_extraneous_fields( $data );
 		$formats     = $this->get_ordered_formats( $data );
 		$fields      = array_map( function ( $v ) {
 			$v = esc_sql( $v );
@@ -219,33 +222,48 @@ abstract class ModelBase {
 
 // todo - maybe make this so
 //	public function insert_many( Array $data ) {
-//		$data = array_map( function ( $item ) {
-//			$d = $this->normalize_data( $item );
-//			$f = array_slice( $this->get_ordered_formats( $d ), 0, count( $d ) );
-//
-//			return [ 'data' => $d, 'formats' => $f ];
-//		}, $data );
-//
-//
-//
-//		return false;
+//		// todo - loop through all data arrays merging them onto default structured array
+//		$cols     = $this->columns();
+//		$defaults = $this->column_defaults();
+////		$data = array_map( function ( $item ) {
+////			$d = $this->normalize_data( $item );
+////			$f = array_slice( $this->get_ordered_formats( $d ), 0, count( $d ) );
+////
+////			return [ 'data' => $d, 'formats' => $f ];
+////		}, $data );
+////
+////
+////
+////		return false;
 //	}
 
 
 	/**
-	 * TODO - maybe reorder data into that specified in the models columns() method
+	 * Takes an array of input data (single row) and plugs in missing defaults as set in the column_defaults() method
 	 *
-	 * Takes an array of input data (single row), plugs in defaults (where missing), and removes extraneous args
+	 * @see column_defaults()
 	 *
 	 * @param array $data
 	 *
 	 * @return array
 	 */
-	public function normalize_data( Array $data ) {
-		$data = array_merge( $this->column_defaults(), $data );
-		$data = array_intersect_key( $data, $this->columns() );
+	public function set_missing_defaults( Array $data ) {
+		return array_merge( $this->column_defaults(), $data );
+	}
 
-		return $data;
+
+	/**
+	 * Takes an array of input data (single row) and removes any extraneous fields that aren't definied in the columns()
+	 * method.
+	 *
+	 * @see columns()
+	 *
+	 * @param array $data
+	 *
+	 * @return array
+	 */
+	public function remove_extraneous_fields( Array $data ) {
+		return array_intersect_key( $data, $this->columns() );
 	}
 
 

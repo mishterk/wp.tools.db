@@ -70,16 +70,26 @@ class ModelTest extends WP_UnitTestCase {
 		$this->assertTrue( $result );
 	}
 
-	function test_normalise_data_sets_defaults_and_removes_extraneous_data() {
+	function test_set_missing_defaults() {
 		$model     = ModelFactory::getTestModel();
 		$inputData = [
-			'post_id'    => 1,
-			'user_id'    => 2,
-			'extraneous' => 'data',
+			'post_id' => 1,
+			'user_id' => 2,
 		];
-		$data      = $model->normalize_data( $inputData );
-		$this->assertFalse( isset( $data['extraneous'] ) );
-		$this->assertTrue( isset( $data['user_id'] ) );
+		$data      = $model->set_missing_defaults( $inputData );
+		$this->assertTrue( isset( $data['type_id'] ) );
+	}
+
+	function test_remove_extraneous_fields() {
+		$model     = ModelFactory::getTestModel();
+		$inputData = [
+			'post_id'               => 1,
+			'user_id'               => 2,
+			'some_extraneous_field' => 'value'
+		];
+		$data      = $model->remove_extraneous_fields( $inputData );
+		$this->assertCount( 2, $data );
+		$this->assertFalse( isset( $data['some_extraneous_field'] ) );
 	}
 
 	function test_insertion_of_duplicate_data_fails() {

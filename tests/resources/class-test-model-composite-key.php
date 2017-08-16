@@ -26,7 +26,7 @@ class Test_Model_Composite_key extends \Mishterk\WP\Tools\DB\ModelBase {
 
 	function column_defaults() {
 		return [
-			'type_id' => 1,
+			'type_id'    => 1,
 		];
 	}
 
