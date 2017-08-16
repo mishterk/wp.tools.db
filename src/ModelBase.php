@@ -343,23 +343,6 @@ abstract class ModelBase {
 	}
 
 
-	// accepts a key value array and builds a where clause
-//	public function build_where_clausex( Array $args ) {
-//		$primary = (array) $this->primary_key();
-//		$formats = $this->columns();
-//		$clause  = '';
-//		$c       = 0;
-//		foreach ( $primary as $key ) {
-//			$f      = $formats[ $key ];
-//			$clause .= ( $c === 0 ) ? 'WHERE' : ' AND';
-//			$clause .= $this->db->prepare( " `$key` = $f", $args[ $c ] );
-//			$c ++;
-//		}
-//
-//		return $clause;
-//	}
-
-
 	/**
 	 * Takes a value and guesses its format in preparation for WP's subset of sprintf() formats.
 	 *
