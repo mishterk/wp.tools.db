@@ -109,6 +109,8 @@ class ModelTest extends WP_UnitTestCase {
 		$this->assertTrue( $model->validate_rows( $validSet ) );
 		$this->assertTrue( $modelC->validate_rows( $validSetC ) );
 
+		$this->expectException( InvalidArgumentException::class );
+
 		$invalidSetByCount  = [
 			[ 'user_id' => 1, 'post_id' => 1 ],
 			[ 'user_id' => 2, 'post_id' => 2, 'type_id' => 1 ],
@@ -118,8 +120,8 @@ class ModelTest extends WP_UnitTestCase {
 			[ 'user_id' => 1, 'post_id' => 2, 'type_id' => 1 ],
 			[ 'user_id' => 2, 'post_id' => 1 ],
 		];
-		$this->assertFalse( $model->validate_rows( $invalidSetByCount ) );
-		$this->assertFalse( $modelC->validate_rows( $invalidSetByCountC ) );
+		$model->validate_rows( $invalidSetByCount );
+		$modelC->validate_rows( $invalidSetByCountC );
 
 		$invalidSetByOrder  = [
 			[ 'user_id' => 1, 'post_id' => 1 ],
@@ -130,8 +132,8 @@ class ModelTest extends WP_UnitTestCase {
 			[ 'post_id' => 2, 'user_id' => 1 ],
 			[ 'user_id' => 2, 'post_id' => 1 ],
 		];
-		$this->assertFalse( $model->validate_rows( $invalidSetByOrder ) );
-		$this->assertFalse( $modelC->validate_rows( $invalidSetByOrderC ) );
+		$model->validate_rows( $invalidSetByOrder );
+		$modelC->validate_rows( $invalidSetByOrderC );
 
 		$invalidSetByMissingKeys  = [
 			[ 'user_id' => 1, 'post_id' => 1 ],
@@ -142,8 +144,8 @@ class ModelTest extends WP_UnitTestCase {
 			[ 'user_id' => 1, 'post_id' => 2 ],
 			[ 'type_id' => 2, 'post_id' => 1 ],
 		];
-		$this->assertFalse( $model->validate_rows( $invalidSetByMissingKeys ) );
-		$this->assertFalse( $modelC->validate_rows( $invalidSetByMissingKeysC ) );
+		$model->validate_rows( $invalidSetByMissingKeys );
+		$modelC->validate_rows( $invalidSetByMissingKeysC );
 
 		$invalidSetByDuplicatedKeys  = [
 			[ 'user_id' => 1, 'post_id' => 1 ],
@@ -154,8 +156,8 @@ class ModelTest extends WP_UnitTestCase {
 			[ 'user_id' => 1, 'post_id' => 1 ],
 			[ 'user_id' => 1, 'post_id' => 2 ],
 		];
-		$this->assertFalse( $model->validate_rows( $invalidSetByDuplicatedKeys ) );
-		$this->assertFalse( $modelC->validate_rows( $invalidSetByDuplicatedKeysC ) );
+		$model->validate_rows( $invalidSetByDuplicatedKeys );
+		$modelC->validate_rows( $invalidSetByDuplicatedKeysC );
 	}
 
 
