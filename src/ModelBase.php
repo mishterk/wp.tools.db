@@ -64,6 +64,9 @@ abstract class ModelBase {
 	/**
 	 * If columns have defaults, the required format here is ['col_name' => 'default_val']
 	 *
+	 * Note: if using the timestamp_field() method to generate a timestamp field in your model's schema, it's not
+	 * necessary to set default values for that particular field.
+	 *
 	 * @return array
 	 */
 	abstract function column_defaults();
