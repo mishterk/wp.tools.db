@@ -159,54 +159,64 @@ abstract class ModelBase {
 	/**
 	 * Inserts a new row
 	 *
-	 * @param array $data Associative array to insert in the format ['column_name' => 'value']
+	 * @param array $row Associative array to insert in the format ['column_name' => 'value']
 	 *
 	 * @return bool
 	 */
-	public function insert( Array $data ) {
-		$data    = $this->set_missing_defaults( $data );
-		$data    = $this->remove_extraneous_fields( $data );
-		$formats = $this->get_ordered_formats( $data );
+	public function insert( Array $row ) {
+		$row     = $this->normalise_row( $row );
+		$formats = $this->get_ordered_formats( $row );
 
-		return (bool) $this->db->insert( $this->full_table_name(), $data, $formats );
+		return (bool) $this->db->insert( $this->full_table_name(), $row, $formats );
 	}
 
 
 	/**
 	 * Updates an existing row based on an array of where conditions in the format ['col_id' => '1', 'col_name' => 'example']
 	 *
-	 * @param array $data
+	 * @param array $row
 	 * @param array $where
 	 *
 	 * @return bool
 	 */
-	public function update( Array $data, Array $where ) {
-		$data    = $this->set_missing_defaults( $data );
-		$data    = $this->remove_extraneous_fields( $data );
-		$formats = $this->get_ordered_formats( $data );
+	public function update( Array $row, Array $where ) {
+		$row     = $this->normalise_row( $row );
+		$formats = $this->get_ordered_formats( $row );
 
-		return (bool) $this->db->update( $this->full_table_name(), $data, $where, $formats );
+		return (bool) $this->db->update( $this->full_table_name(), $row, $where, $formats );
+	}
+
+
+	/**
+	 * Takes an array of field names, wraps them in backticks, then implodes them ready for passing to an insert
+	 * statement.
+	 *
+	 * @param array $field_names
+	 *
+	 * @return string
+	 */
+	public function prepare_fields_string( Array $field_names ) {
+		return implode( ',', array_map( function ( $v ) {
+			$v = esc_sql( $v );
+
+			return "`$v`";
+		}, $field_names ) );
 	}
 
 
 	/**
 	 * Inserts a row if it doesn't already exist, updates it if it does.
 	 *
-	 * @param array $data
+	 * @param array $row
 	 *
 	 * @return bool
 	 */
-	public function insert_or_update( Array $data ) {
-		$data        = $this->set_missing_defaults( $data );
-		$data        = $this->remove_extraneous_fields( $data );
-		$formats     = $this->get_ordered_formats( $data );
-		$fields      = array_map( function ( $v ) {
-			$v = esc_sql( $v );
-
-			return "`$v`";
-		}, array_keys( $data ) );
-		$values      = array_values( $data );
-		$fields_str  = implode( ',', $fields );
+	public function insert_or_update( Array $row ) {
+		$row         = $this->normalise_row( $row );
+		$formats     = $this->get_ordered_formats( $row );
+		$fields      = array_keys( $row );
+		$fields_str  = $this->prepare_fields_string( $fields );
+		$values      = array_values( $row );
 		$n           = count( $values );
 		$formats_str = implode( ',', array_slice( $formats, 0, $n ) );
 
@@ -223,22 +233,123 @@ abstract class ModelBase {
 		return (bool) $this->db->query( $query );
 	}
 
-// todo - maybe make this so
-//	public function insert_many( Array $data ) {
-//		// todo - loop through all data arrays merging them onto default structured array
-//		$cols     = $this->columns();
-//		$defaults = $this->column_defaults();
-////		$data = array_map( function ( $item ) {
-////			$d = $this->normalize_data( $item );
-////			$f = array_slice( $this->get_ordered_formats( $d ), 0, count( $d ) );
-////
-////			return [ 'data' => $d, 'formats' => $f ];
-////		}, $data );
-////
-////
-////
-////		return false;
-//	}
+
+	/**
+	 * Normalises a single data set (row) by populating defaults where appropriate, and removing extraneous fields.
+	 *
+	 * @param array $row
+	 *
+	 * @return array
+	 */
+	public function normalise_row( Array $row ) {
+		$row = $this->set_missing_defaults( $row );
+		$row = $this->remove_extraneous_fields( $row );
+
+		return $row;
+	}
+
+
+	/**
+	 * Accepts a multi-dimensional array of data sets (rows) and normalises them all
+	 *
+	 * @param array $rows
+	 *
+	 * @return array
+	 */
+	public function normalise_rows( Array $rows ) {
+		return array_map( [ $this, 'normalise_row' ], $rows );
+	}
+
+
+	/**
+	 * Validates a multi-dimensional array of data sets (multiple rows) by checking the following;
+	 * 1. each row has a valid primary key;
+	 * 2. each 'row' has the same number of items;
+	 * 3. row keys are in the same order;
+	 * 4. the primary key isn't duplicated within the array.
+	 *
+	 * These are all necessary conditions for inserting many rows at once via an SQL query.
+	 *
+	 * @param array $rows
+	 *
+	 * @throws \InvalidArgumentException
+	 *
+	 * @return bool
+	 */
+	public function validate_rows( Array $rows ) {
+
+		$counts          = [];
+		$keys            = [];
+		$keys_serialised = [];
+		$primary         = [];
+
+		$primary_key   = array_flip( (array) $this->primary_key() );
+		$n_primary_key = count( $primary_key );
+
+		foreach ( $rows as $row ) {
+			$prim_key_values = array_intersect_key( $row, $primary_key );
+			// 1. bail if row doesn't have primary keys
+			if ( count( $prim_key_values ) !== $n_primary_key ) {
+				throw new \InvalidArgumentException( 'Primary key/s not in data set' );
+			}
+			$counts[ count( $row ) ] = 1;
+			$primary[]               = serialize( array_merge( $primary_key, array_intersect_key( $row, $primary_key ) ) );
+			$_keys                   = array_keys( $row );
+			$keys[]                  = $_keys;
+			$keys_serialised[]       = serialize( $_keys );
+		}
+
+		// 2. check consistent number of items in rows
+		if ( count( $counts ) > 1 ) {
+			throw new \InvalidArgumentException( 'Rows do not contain consistent number of fields' );
+		}
+
+		// 3. check key structure is the same
+		if ( count( array_unique( $keys_serialised ) ) > 1 ) {
+			throw new \InvalidArgumentException( 'Key structure is not consistent between rows' );
+		}
+
+		// 4. check for primary key duplicates
+		if ( count( $primary ) !== count( array_unique( $primary ) ) ) {
+			throw new \InvalidArgumentException( 'Primary key/s were duplicated across set of rows' );
+		}
+
+		return true;
+	}
+
+
+	/**
+	 * Inserts multiple rows based on a consistent multi-dimensional array (an array of rows). The data provided needs
+	 * to be structured consistently; that is, each row needs to have the same number of items with the keys in the same
+	 * order. Each row also needs to contain the primary key (single or composite) and cannot contain key duplicates.
+	 *
+	 * @param array $rows
+	 *
+	 * @return bool
+	 */
+	public function insert_rows( Array $rows ) {
+
+		$rows = $this->normalise_rows( $rows );
+		$this->validate_rows( $rows ); // throws
+
+		$formats     = $this->get_ordered_formats( $rows[0] );
+		$fields      = array_keys( $rows[0] );
+		$fields_str  = $this->prepare_fields_string( $fields );
+		$n_rows      = count( $rows );
+		$n_fields    = count( $rows[0] );
+		$formats_str = implode( ',', array_slice( $formats, 0, $n_fields ) );
+
+		$SQL = "INSERT INTO {$this->full_table_name()} ($fields_str) VALUES";
+
+		$c = 0;
+		foreach ( $rows as $row ) {
+			$c ++;
+			$SQL .= $this->db->prepare( " ($formats_str)", $row );
+			$SQL .= ( $n_rows === $c ? ';' : ',' );
+		}
+
+		return (bool) $this->db->query( $SQL );
+	}
 
 
 	/**
@@ -246,12 +357,12 @@ abstract class ModelBase {
 	 *
 	 * @see column_defaults()
 	 *
-	 * @param array $data
+	 * @param array $row
 	 *
 	 * @return array
 	 */
-	public function set_missing_defaults( Array $data ) {
-		return array_merge( $this->column_defaults(), $data );
+	public function set_missing_defaults( Array $row ) {
+		return array_merge( $this->column_defaults(), $row );
 	}
 
 
@@ -261,12 +372,12 @@ abstract class ModelBase {
 	 *
 	 * @see columns()
 	 *
-	 * @param array $data
+	 * @param array $row
 	 *
 	 * @return array
 	 */
-	public function remove_extraneous_fields( Array $data ) {
-		return array_intersect_key( $data, $this->columns() );
+	public function remove_extraneous_fields( Array $row ) {
+		return array_intersect_key( $row, $this->columns() );
 	}
 
 
@@ -274,13 +385,13 @@ abstract class ModelBase {
 	 * Takes a normalised array of input data (single row) in any order and returns a correctly ordered formats array
 	 * for passing to our DB object
 	 *
-	 * @param array $data
+	 * @param array $row
 	 *
 	 * @return array
 	 */
-	public function get_ordered_formats( Array $data ) {
+	public function get_ordered_formats( Array $row ) {
 		$formats = $this->columns();
-		$keys    = array_keys( $data );
+		$keys    = array_keys( $row );
 		$formats = array_merge( array_flip( $keys ), $formats );
 
 		return $formats;

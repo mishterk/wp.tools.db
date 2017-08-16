@@ -70,6 +70,142 @@ class ModelTest extends WP_UnitTestCase {
 		$this->assertTrue( $result );
 	}
 
+	function test_normalise_row() {
+		$model         = ModelFactory::getTestModel();
+		$normalisedRow = [ 'user_id' => 1, 'post_id' => 1, 'type_id' => 1 ];
+		$this->assertEqualSets( $model->normalise_row( $normalisedRow ), $normalisedRow );
+		$abnormalRow = [ 'post_id' => 1, 'user_id' => 1 ];
+		$this->assertEqualSets( $model->normalise_row( $abnormalRow ), $normalisedRow );
+	}
+
+	function test_normalise_many_rows() {
+		$model      = ModelFactory::getTestModel();
+		$normalised = [
+			[ 'user_id' => 1, 'post_id' => 1, 'type_id' => 1 ],
+			[ 'user_id' => 1, 'post_id' => 2, 'type_id' => 1 ],
+			[ 'user_id' => 1, 'post_id' => 3, 'type_id' => 1 ],
+		];
+		$this->assertEqualSets( $model->normalise_rows( $normalised ), $normalised );
+		$abnormal = [
+			[ 'user_id' => 1, 'post_id' => 1 ],
+			[ 'post_id' => 2, 'user_id' => 1, 'type_id' => 1 ],
+			[ 'user_id' => 1, 'post_id' => 3, 'type_id' => 1 ],
+		];
+		$this->assertEqualSets( $model->normalise_rows( $abnormal ), $normalised );
+	}
+
+	function test_validate_rows() {
+		$model     = ModelFactory::getTestModel();
+		$modelC    = ModelFactory::getTestModelCompositeKey();
+		$validSet  = [
+			[ 'user_id' => 1, 'post_id' => 1 ],
+			[ 'user_id' => 2, 'post_id' => 1 ],
+		];
+		$validSetC = [
+			[ 'user_id' => 1, 'post_id' => 1 ],
+			[ 'user_id' => 1, 'post_id' => 2 ],
+			[ 'user_id' => 2, 'post_id' => 1 ],
+		];
+		$this->assertTrue( $model->validate_rows( $validSet ) );
+		$this->assertTrue( $modelC->validate_rows( $validSetC ) );
+
+		$invalidSetByCount  = [
+			[ 'user_id' => 1, 'post_id' => 1 ],
+			[ 'user_id' => 2, 'post_id' => 2, 'type_id' => 1 ],
+		];
+		$invalidSetByCountC = [
+			[ 'user_id' => 1, 'post_id' => 1 ],
+			[ 'user_id' => 1, 'post_id' => 2, 'type_id' => 1 ],
+			[ 'user_id' => 2, 'post_id' => 1 ],
+		];
+		$this->assertFalse( $model->validate_rows( $invalidSetByCount ) );
+		$this->assertFalse( $modelC->validate_rows( $invalidSetByCountC ) );
+
+		$invalidSetByOrder  = [
+			[ 'user_id' => 1, 'post_id' => 1 ],
+			[ 'post_id' => 1, 'user_id' => 2 ],
+		];
+		$invalidSetByOrderC = [
+			[ 'user_id' => 1, 'post_id' => 1 ],
+			[ 'post_id' => 2, 'user_id' => 1 ],
+			[ 'user_id' => 2, 'post_id' => 1 ],
+		];
+		$this->assertFalse( $model->validate_rows( $invalidSetByOrder ) );
+		$this->assertFalse( $modelC->validate_rows( $invalidSetByOrderC ) );
+
+		$invalidSetByMissingKeys  = [
+			[ 'user_id' => 1, 'post_id' => 1 ],
+			[ 'type_id' => 9, 'post_id' => 1 ],
+		];
+		$invalidSetByMissingKeysC = [
+			[ 'user_id' => 1, 'post_id' => 1 ],
+			[ 'user_id' => 1, 'post_id' => 2 ],
+			[ 'type_id' => 2, 'post_id' => 1 ],
+		];
+		$this->assertFalse( $model->validate_rows( $invalidSetByMissingKeys ) );
+		$this->assertFalse( $modelC->validate_rows( $invalidSetByMissingKeysC ) );
+
+		$invalidSetByDuplicatedKeys  = [
+			[ 'user_id' => 1, 'post_id' => 1 ],
+			[ 'user_id' => 1, 'post_id' => 2 ],
+		];
+		$invalidSetByDuplicatedKeysC = [
+			[ 'user_id' => 1, 'post_id' => 1 ],
+			[ 'user_id' => 1, 'post_id' => 1 ],
+			[ 'user_id' => 1, 'post_id' => 2 ],
+		];
+		$this->assertFalse( $model->validate_rows( $invalidSetByDuplicatedKeys ) );
+		$this->assertFalse( $modelC->validate_rows( $invalidSetByDuplicatedKeysC ) );
+	}
+
+
+	function test_prepare_fields_string() {
+		$model    = ModelFactory::getTestModel();
+		$fields   = [ 'one', 'two', 'three' ];
+		$expected = '`one`,`two`,`three`';
+		$this->assertSame( $expected, $model->prepare_fields_string( $fields ) );
+	}
+
+
+	/**
+	 * @group working
+	 */
+	function test_insert_rows() {
+		$model = ModelFactory::getTestModel();
+		$rows  = [
+			[ 'user_id' => 1, 'post_id' => 1 ],
+			[ 'user_id' => 2, 'post_id' => 1 ],
+		];
+		$this->assertTrue( $model->insert_rows( $rows ) );
+		$this->assertSame( 2, $model->count() );
+
+		$modelC = ModelFactory::getTestModelCompositeKey();
+		$rows   = [
+			[ 'user_id' => 1, 'post_id' => 1 ],
+			[ 'user_id' => 1, 'post_id' => 2 ],
+			[ 'user_id' => 1, 'post_id' => 3 ],
+			[ 'user_id' => 2, 'post_id' => 1 ],
+			[ 'user_id' => 2, 'post_id' => 2 ],
+			[ 'user_id' => 2, 'post_id' => 3 ],
+		];
+		$this->assertTrue( $modelC->insert_rows( $rows ) );
+		$this->assertSame( 6, $modelC->count() );
+
+		$this->expectException( InvalidArgumentException::class );
+		$outOfOrder = [
+			[ 'user_id' => 1, 'post_id' => 1 ],
+			[ 'post_id' => 2, 'user_id' => 1 ],
+		];
+		$model->insert_rows( $outOfOrder );
+
+		$this->expectException( InvalidArgumentException::class );
+		$missingKey = [
+			[ 'post_id' => 1 ],
+			[ 'post_id' => 2, 'user_id' => 1 ],
+		];
+		$model->insert_rows( $missingKey );
+	}
+
 	function test_set_missing_defaults() {
 		$model     = ModelFactory::getTestModel();
 		$inputData = [
@@ -287,21 +423,6 @@ class ModelTest extends WP_UnitTestCase {
 		$this->assertTrue( $model->delete_where( [ 'user_id' => 4 ] ) );
 		$this->assertSame( 0, $model->count() );
 	}
-
-
-
-	// todo - if the insert_many() method happens, this is our testing foundation
-//	function test_insert_many() {
-//		$model  = ModelFactory::getTestModel();
-//		$data   = [
-//			[ 'post_id' => 1, 'user_id' => 2, 'type_id' => 3 ],
-//			[ 'post_id' => 2, 'user_id' => 3 ],
-//			[ 'post_id' => 3, 'user_id' => 4, 'type_id' => 5, 'extraneous' => 'data' ],
-//		];
-//		$result = $model->insert_many( $data );
-//		$this->assertTrue( $result );
-//		$this->assertSame( 3, $model->count() );
-//	}
 
 
 }
