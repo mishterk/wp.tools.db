@@ -15,7 +15,7 @@ class ModelTableCreationDeletionTest extends WP_UnitTestCase {
 		$model = ModelFactory::getTestModel();
 		$this->assertTrue( $model->create_table() );
 		$model->drop_on_deactivation = false;
-		$this->assertFalse( $model->drop_table() );
+		@$this->assertFalse( $model->drop_table() );
 		$model->drop_on_deactivation = true;
 		$this->assertTrue( $model->drop_table() );
 	}
@@ -24,7 +24,7 @@ class ModelTableCreationDeletionTest extends WP_UnitTestCase {
 		$model = ModelFactory::getTestModel();
 		$this->assertTrue( $model->create_table() );
 		$model->drop_on_deactivation = false;
-		$this->assertFalse( $model->drop_table() );
+		@$this->assertFalse( $model->drop_table() );
 		$this->assertTrue( $model->drop_table( true ) );
 	}
 

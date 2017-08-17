@@ -109,8 +109,6 @@ class ModelTest extends WP_UnitTestCase {
 		$this->assertTrue( $model->validate_rows( $validSet ) );
 		$this->assertTrue( $modelC->validate_rows( $validSetC ) );
 
-		$this->expectException( InvalidArgumentException::class );
-
 		$invalidSetByCount  = [
 			[ 'user_id' => 1, 'post_id' => 1 ],
 			[ 'user_id' => 2, 'post_id' => 2, 'type_id' => 1 ],
@@ -120,8 +118,8 @@ class ModelTest extends WP_UnitTestCase {
 			[ 'user_id' => 1, 'post_id' => 2, 'type_id' => 1 ],
 			[ 'user_id' => 2, 'post_id' => 1 ],
 		];
-		$model->validate_rows( $invalidSetByCount );
-		$modelC->validate_rows( $invalidSetByCountC );
+		$this->assertFalse($model->validate_rows( $invalidSetByCount ));
+		$this->assertFalse($modelC->validate_rows( $invalidSetByCountC ));
 
 		$invalidSetByOrder  = [
 			[ 'user_id' => 1, 'post_id' => 1 ],
@@ -132,8 +130,8 @@ class ModelTest extends WP_UnitTestCase {
 			[ 'post_id' => 2, 'user_id' => 1 ],
 			[ 'user_id' => 2, 'post_id' => 1 ],
 		];
-		$model->validate_rows( $invalidSetByOrder );
-		$modelC->validate_rows( $invalidSetByOrderC );
+		$this->assertFalse($model->validate_rows( $invalidSetByOrder ));
+		$this->assertFalse($modelC->validate_rows( $invalidSetByOrderC ));
 
 		$invalidSetByMissingKeys  = [
 			[ 'user_id' => 1, 'post_id' => 1 ],
@@ -144,8 +142,8 @@ class ModelTest extends WP_UnitTestCase {
 			[ 'user_id' => 1, 'post_id' => 2 ],
 			[ 'type_id' => 2, 'post_id' => 1 ],
 		];
-		$model->validate_rows( $invalidSetByMissingKeys );
-		$modelC->validate_rows( $invalidSetByMissingKeysC );
+		$this->assertFalse($model->validate_rows( $invalidSetByMissingKeys ));
+		$this->assertFalse($modelC->validate_rows( $invalidSetByMissingKeysC ));
 
 		$invalidSetByDuplicatedKeys  = [
 			[ 'user_id' => 1, 'post_id' => 1 ],
@@ -156,8 +154,8 @@ class ModelTest extends WP_UnitTestCase {
 			[ 'user_id' => 1, 'post_id' => 1 ],
 			[ 'user_id' => 1, 'post_id' => 2 ],
 		];
-		$model->validate_rows( $invalidSetByDuplicatedKeys );
-		$modelC->validate_rows( $invalidSetByDuplicatedKeysC );
+		$this->assertFalse($model->validate_rows( $invalidSetByDuplicatedKeys ));
+		$this->assertFalse($modelC->validate_rows( $invalidSetByDuplicatedKeysC ));
 	}
 
 
@@ -169,9 +167,6 @@ class ModelTest extends WP_UnitTestCase {
 	}
 
 
-	/**
-	 * @group working
-	 */
 	function test_insert_rows() {
 		$model = ModelFactory::getTestModel();
 		$rows  = [
@@ -193,19 +188,19 @@ class ModelTest extends WP_UnitTestCase {
 		$this->assertTrue( $modelC->insert_rows( $rows ) );
 		$this->assertSame( 6, $modelC->count() );
 
-		$this->expectException( InvalidArgumentException::class );
+
 		$outOfOrder = [
 			[ 'user_id' => 1, 'post_id' => 1 ],
 			[ 'post_id' => 2, 'user_id' => 1 ],
 		];
-		$model->insert_rows( $outOfOrder );
 
-		$this->expectException( InvalidArgumentException::class );
+		$this->assertFalse( $model->insert_rows( $outOfOrder ) );
+
 		$missingKey = [
 			[ 'post_id' => 1 ],
 			[ 'post_id' => 2, 'user_id' => 1 ],
 		];
-		$model->insert_rows( $missingKey );
+		$this->assertFalse( $model->insert_rows( $missingKey ) );
 	}
 
 	function test_set_missing_defaults() {
@@ -341,9 +336,9 @@ class ModelTest extends WP_UnitTestCase {
 
 		$model = ModelFactory::getTestModelCompositeKey();
 		$this->assertTrue( $model->validate_inbound_primary_key( [ 1, 2 ] ) );
+		$this->assertTrue( $model->validate_inbound_primary_key( [ 'user_id' => 1, 'post_id' => 2 ] ) );
 		$this->assertFalse( $model->validate_inbound_primary_key( 1 ) );
 		$this->assertFalse( $model->validate_inbound_primary_key( [ 1 ] ) );
-		$this->assertTrue( $model->validate_inbound_primary_key( [ 'user_id' => 1, 'post_id' => 2 ] ) );
 		$this->assertFalse( $model->validate_inbound_primary_key( [ 'wrong_key' => 1, 'post_id' => 2 ] ) );
 	}
 
@@ -369,7 +364,7 @@ class ModelTest extends WP_UnitTestCase {
 		];
 		$result = $model->insert( $data );
 		$this->assertTrue( $result, 'Failed to insert initial data' );
-		$this->assertFalse( @$model->find( 4 ) );
+		$this->assertFalse( $model->find( 4 ) );
 		$this->assertTrue( is_array( $model->find( [ 4, 3 ] ) ) );
 		$this->assertTrue( is_array( $model->find( [ 'user_id' => 4, 'post_id' => 3 ] ) ) );
 		$this->assertTrue( is_array( $model->find( [ 'post_id' => 3, 'user_id' => 4 ] ) ) );

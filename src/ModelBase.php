@@ -115,7 +115,7 @@ abstract class ModelBase {
 			return $this->db->query( "DROP TABLE {$this->full_table_name()};" );
 		}
 
-		return false;
+		return $this->handle_error( '', "{$this->full_table_name()} table could not be dropped due to \$this->drop_on_deactivion set to true" );
 	}
 
 
@@ -272,8 +272,6 @@ abstract class ModelBase {
 	 *
 	 * @param array $rows
 	 *
-	 * @throws \InvalidArgumentException
-	 *
 	 * @return bool
 	 */
 	public function validate_rows( Array $rows ) {
@@ -290,7 +288,7 @@ abstract class ModelBase {
 			$prim_key_values = array_intersect_key( $row, $primary_key );
 			// 1. bail if row doesn't have primary keys
 			if ( count( $prim_key_values ) !== $n_primary_key ) {
-				throw new \InvalidArgumentException( 'Primary key/s not in data set' );
+				return $this->handle_error( '', 'Primary key/s not in data set' );
 			}
 			$counts[ count( $row ) ] = 1;
 			$primary[]               = serialize( array_merge( $primary_key, array_intersect_key( $row, $primary_key ) ) );
@@ -301,17 +299,17 @@ abstract class ModelBase {
 
 		// 2. check consistent number of items in rows
 		if ( count( $counts ) > 1 ) {
-			throw new \InvalidArgumentException( 'Rows do not contain consistent number of fields' );
+			return $this->handle_error( '', 'Rows do not contain consistent number of fields' );
 		}
 
 		// 3. check key structure is the same
 		if ( count( array_unique( $keys_serialised ) ) > 1 ) {
-			throw new \InvalidArgumentException( 'Key structure is not consistent between rows' );
+			return $this->handle_error( '', 'Key structure is not consistent between rows' );
 		}
 
 		// 4. check for primary key duplicates
 		if ( count( $primary ) !== count( array_unique( $primary ) ) ) {
-			throw new \InvalidArgumentException( 'Primary key/s were duplicated across set of rows' );
+			return $this->handle_error( '', 'Primary key/s were duplicated across set of rows' );
 		}
 
 		return true;
@@ -330,7 +328,9 @@ abstract class ModelBase {
 	public function insert_rows( Array $rows ) {
 
 		$rows = $this->normalise_rows( $rows );
-		$this->validate_rows( $rows ); // throws
+		if ( ! $this->validate_rows( $rows ) ) {
+			return $this->handle_error( '', 'Rows could not be inserted due to validation error' );
+		}
 
 		$formats     = $this->get_ordered_formats( $rows[0] );
 		$fields      = array_keys( $rows[0] );
@@ -423,15 +423,17 @@ abstract class ModelBase {
 		$nPrimaryKey = count( $primaryKey );
 		if ( is_array( $key_or_array ) ) {
 			if ( $nPrimaryKey !== count( $key_or_array ) ) {
-				return false;
+				return $this->handle_error( '', 'Primary key did not validate due to incorrect number of elements' );
 			}
 			if ( $this->is_associative_array( $key_or_array ) ) {
-				return empty( array_diff_key( $key_or_array, array_flip( $primaryKey ) ) );
+				return empty( array_diff_key( $key_or_array, array_flip( $primaryKey ) ) )
+				       or $this->handle_error( '', 'Primary key did not validate due to incorrect keys' );
 			}
 
 			return true;
 		} else {
-			return $nPrimaryKey === 1;
+			return $nPrimaryKey === 1
+			       or $this->handle_error( '', 'Primary key did not validate due to too many elements – expected 1' );
 		}
 	}
 
@@ -459,9 +461,7 @@ abstract class ModelBase {
 	 */
 	public function find( $key_or_array ) {
 		if ( ! $this->validate_inbound_primary_key( $key_or_array ) ) {
-			trigger_error( 'Error: arguments provided to $this->get() were incorrect. Check the primary key/s required for this model.' );
-
-			return false;
+			return $this->handle_error( '', 'Error: arguments provided to $this->get() were incorrect. Check the primary key/s required for this model.' );
 		}
 
 		$key_or_array = ( is_array( $key_or_array ) and $this->is_associative_array( $key_or_array ) )
@@ -534,12 +534,13 @@ abstract class ModelBase {
 	 * Finds multiple rows based on provided associative array
 	 *
 	 * @param array $args
+	 * @param int $limit
 	 *
 	 * @return array|bool
 	 */
 	public function find_where( Array $args, $limit = 0 ) {
 		if ( ! $this->is_associative_array( $args ) ) {
-			return false;
+			return $this->handle_error( '', __METHOD__ . ' did not run due to $args variable not being an associative array' );
 		}
 
 		$where = $this->build_where_clause( $args );
@@ -577,13 +578,34 @@ abstract class ModelBase {
 	 */
 	public function delete_where( Array $args ) {
 		if ( ! $this->is_associative_array( $args ) ) {
-			return false;
+			return $this->handle_error( '', __METHOD__ . ' did not run due to $args variable not being an associative array' );
 		}
 
 		$where = $this->build_where_clause( $args );
 		$query = "DELETE FROM {$this->full_table_name()} $where;";
 
 		return (bool) $this->db->query( $query );
+	}
+
+
+	/**
+	 * Error handler. Loosely based on WP_Error (takes similar args), but you can override this if you want to do
+	 * something different with error messages.
+	 *
+	 * @param string|int $code
+	 * @param string $message
+	 * @param string|array $data
+	 * @param mixed $return Set a return value
+	 *
+	 * @return mixed
+	 */
+	protected function handle_error( $code = '', $message = '', $data = '', $return = false ) {
+		$code = $code ? "[Code:$code] " : '';
+		$data = ! is_array( $data ) ? $data : json_encode( $data );
+		$data = $data ? " | $data" : '';
+		trigger_error( $code . $message . $data );
+
+		return $return;
 	}
 
 

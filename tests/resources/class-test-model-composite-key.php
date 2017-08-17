@@ -26,7 +26,7 @@ class Test_Model_Composite_key extends \Mishterk\WP\Tools\DB\ModelBase {
 
 	function column_defaults() {
 		return [
-			'type_id'    => 1,
+			'type_id' => 1,
 		];
 	}
 
@@ -44,5 +44,10 @@ class Test_Model_Composite_key extends \Mishterk\WP\Tools\DB\ModelBase {
 
 	function primary_key() {
 		return [ 'user_id', 'post_id' ];
+	}
+
+
+	protected function handle_error( $code = '', $message = '', $data = '', $return = false ) {
+		return false;
 	}
 }

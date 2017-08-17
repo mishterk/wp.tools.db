@@ -45,4 +45,9 @@ class Test_Model extends \Mishterk\WP\Tools\DB\ModelBase {
 	function primary_key() {
 		return [ 'user_id' ];
 	}
+
+
+	protected function handle_error( $code = '', $message = '', $data = '', $return = false ){
+		return false;
+	}
 }
