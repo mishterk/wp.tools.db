@@ -48,7 +48,7 @@ abstract class ModelBase {
 	/**
 	 * Must return the table name without the prefix
 	 *
-	 * @return mixed
+	 * @return string
 	 */
 	abstract function table_name();
 
@@ -76,7 +76,7 @@ abstract class ModelBase {
 	 * Returns an array containing the primary key. Multiple columns are supported for composite keys, but should be
 	 * in order of their composition to ensure optimal query performance.
 	 *
-	 * @return string|array
+	 * @return array
 	 */
 	abstract function primary_key();
 
