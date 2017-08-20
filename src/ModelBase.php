@@ -128,7 +128,7 @@ abstract class ModelBase {
 	 * @return string
 	 */
 	function timestamp_field( $name = 'created_at', $update = false ) {
-		return "$name DATETIME DEFAULT CURRENT_TIMESTAMP" . ( $update ? " ON UPDATE CURRENT_TIMESTAMP" : '' );
+		return "$name TIMESTAMP DEFAULT CURRENT_TIMESTAMP" . ( $update ? " ON UPDATE CURRENT_TIMESTAMP" : '' );
 	}
 
 
