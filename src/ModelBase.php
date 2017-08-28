@@ -226,7 +226,7 @@ abstract class ModelBase {
 		$c = 0;
 		foreach ( $fields as $field ) {
 			$c ++;
-			$query .= " $field = VALUES($field)";
+			$query .= " `$field` = VALUES(`$field`)";
 			$query .= ( $n === $c ? ';' : ',' );
 		}
 
