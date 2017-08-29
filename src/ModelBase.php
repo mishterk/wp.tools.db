@@ -535,10 +535,11 @@ abstract class ModelBase {
 	 *
 	 * @param array $args
 	 * @param int $limit
+	 * @param int $offset
 	 *
 	 * @return array|bool
 	 */
-	public function find_where( Array $args, $limit = 0 ) {
+	public function find_where( Array $args, $limit = 0, $offset = 0 ) {
 		if ( ! $this->is_associative_array( $args ) ) {
 			return $this->handle_error( '', __METHOD__ . ' did not run due to $args variable not being an associative array' );
 		}
@@ -548,6 +549,10 @@ abstract class ModelBase {
 
 		if ( $limit > 0 ) {
 			$query .= $this->db->prepare( " LIMIT %d", $limit );
+		}
+
+		if ( $offset > 0 ) {
+			$query .= $this->db->prepare( " OFFSET %d", $offset );
 		}
 
 		$query .= ';';

@@ -118,8 +118,8 @@ class ModelTest extends WP_UnitTestCase {
 			[ 'user_id' => 1, 'post_id' => 2, 'type_id' => 1 ],
 			[ 'user_id' => 2, 'post_id' => 1 ],
 		];
-		$this->assertFalse($model->validate_rows( $invalidSetByCount ));
-		$this->assertFalse($modelC->validate_rows( $invalidSetByCountC ));
+		$this->assertFalse( $model->validate_rows( $invalidSetByCount ) );
+		$this->assertFalse( $modelC->validate_rows( $invalidSetByCountC ) );
 
 		$invalidSetByOrder  = [
 			[ 'user_id' => 1, 'post_id' => 1 ],
@@ -130,8 +130,8 @@ class ModelTest extends WP_UnitTestCase {
 			[ 'post_id' => 2, 'user_id' => 1 ],
 			[ 'user_id' => 2, 'post_id' => 1 ],
 		];
-		$this->assertFalse($model->validate_rows( $invalidSetByOrder ));
-		$this->assertFalse($modelC->validate_rows( $invalidSetByOrderC ));
+		$this->assertFalse( $model->validate_rows( $invalidSetByOrder ) );
+		$this->assertFalse( $modelC->validate_rows( $invalidSetByOrderC ) );
 
 		$invalidSetByMissingKeys  = [
 			[ 'user_id' => 1, 'post_id' => 1 ],
@@ -142,8 +142,8 @@ class ModelTest extends WP_UnitTestCase {
 			[ 'user_id' => 1, 'post_id' => 2 ],
 			[ 'type_id' => 2, 'post_id' => 1 ],
 		];
-		$this->assertFalse($model->validate_rows( $invalidSetByMissingKeys ));
-		$this->assertFalse($modelC->validate_rows( $invalidSetByMissingKeysC ));
+		$this->assertFalse( $model->validate_rows( $invalidSetByMissingKeys ) );
+		$this->assertFalse( $modelC->validate_rows( $invalidSetByMissingKeysC ) );
 
 		$invalidSetByDuplicatedKeys  = [
 			[ 'user_id' => 1, 'post_id' => 1 ],
@@ -154,8 +154,8 @@ class ModelTest extends WP_UnitTestCase {
 			[ 'user_id' => 1, 'post_id' => 1 ],
 			[ 'user_id' => 1, 'post_id' => 2 ],
 		];
-		$this->assertFalse($model->validate_rows( $invalidSetByDuplicatedKeys ));
-		$this->assertFalse($modelC->validate_rows( $invalidSetByDuplicatedKeysC ));
+		$this->assertFalse( $model->validate_rows( $invalidSetByDuplicatedKeys ) );
+		$this->assertFalse( $modelC->validate_rows( $invalidSetByDuplicatedKeysC ) );
 	}
 
 
@@ -399,6 +399,31 @@ class ModelTest extends WP_UnitTestCase {
 		$this->assertCount( 1, $model->find_where( [ 'post_id' => 4 ], 1 ) );
 		$this->assertCount( 0, $model->find_where( [ 'post_id' => 40 ] ) );
 	}
+
+
+	function test_find_where_limit_and_offset_are_working() {
+		$model = ModelFactory::getTestModel();
+		$rows  = [
+			[ 'user_id' => 1, 'post_id' => 1 ],
+			[ 'user_id' => 2, 'post_id' => 1 ],
+			[ 'user_id' => 3, 'post_id' => 1 ],
+			[ 'user_id' => 4, 'post_id' => 1 ],
+			[ 'user_id' => 5, 'post_id' => 1 ],
+			[ 'user_id' => 6, 'post_id' => 1 ],
+			[ 'user_id' => 7, 'post_id' => 1 ],
+			[ 'user_id' => 8, 'post_id' => 1 ],
+			[ 'user_id' => 9, 'post_id' => 1 ],
+			[ 'user_id' => 10, 'post_id' => 1 ],
+		];
+		$this->assertTrue( $model->insert_rows( $rows ) );
+		$this->assertSame( 10, $model->count() );
+		$this->assertCount( 5, $model->find_where( [ 'post_id' => 1 ], $limit = 5 ) );
+
+		$query = $model->find_where( [ 'post_id' => 1 ], $limit = 5, $offset = 5 );
+		$this->assertCount( 5, $query );
+		$this->assertSame( 6, intval( $query[0]['user_id'] ) );
+	}
+
 
 	function test_delete_where() {
 		$model  = ModelFactory::getTestModelCompositeKey();
