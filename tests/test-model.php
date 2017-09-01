@@ -294,6 +294,27 @@ class ModelTest extends WP_UnitTestCase {
 		$this->assertSame( 1, $model->count() );
 	}
 
+	/** @group complete */
+	function test_insert_or_update_rows_method_overwrites_existing_records() {
+		$model = ModelFactory::getTestModel();
+		$rows  = [
+			[ 'user_id' => 1, 'post_id' => 1 ],
+			[ 'user_id' => 2, 'post_id' => 1 ],
+		];
+		$this->assertTrue( $model->insert_rows( $rows ) );
+		$this->assertSame( 2, $model->count() );
+
+		// insert new and changed existing rows
+		$rows = [
+			[ 'user_id' => 2, 'post_id' => 2 ], // changed
+			[ 'user_id' => 3, 'post_id' => 1 ], // new
+		];
+		$this->assertTrue( $model->insert_or_update_rows( $rows ) );
+		$this->assertSame( 3, $model->count() );
+		$saved_row = $model->find( 2 );
+		$this->assertSame( 2, intval( $saved_row['post_id'] ) );
+	}
+
 	function test_column_format() {
 		$model = ModelFactory::getTestModel();
 		$cols  = $model->columns();

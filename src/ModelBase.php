@@ -353,6 +353,54 @@ abstract class ModelBase {
 
 
 	/**
+	 * TODO this method is a combinations of copy/paste parts of insert_rows() and insert_or_update(). There is opportunity here for abstraction.
+	 *
+	 * As per @see insert_rows(), only this method will update any records that are already stored in the table. Use
+	 * this only when necessary, as the insert_rows() method has less to do and will, therefore, be a more efficient
+	 * option when you know you are dealing with new data.
+	 *
+	 * @param array $rows
+	 *
+	 * @return bool|mixed
+	 */
+	public function insert_or_update_rows( Array $rows ) {
+		$rows = $this->normalise_rows( $rows );
+		if ( ! $this->validate_rows( $rows ) ) {
+			return $this->handle_error( '', 'Rows could not be inserted due to validation error' );
+		}
+
+		$formats     = $this->get_ordered_formats( $rows[0] );
+		$fields      = array_keys( $rows[0] );
+		$fields_str  = $this->prepare_fields_string( $fields );
+		$n_rows      = count( $rows );
+		$n_fields    = count( $rows[0] );
+		$formats_str = implode( ',', array_slice( $formats, 0, $n_fields ) );
+
+		$SQL = "INSERT INTO {$this->full_table_name()} ($fields_str) VALUES";
+
+		// prep data sets
+		$c = 0;
+		foreach ( $rows as $row ) {
+			$c ++;
+			$SQL .= $this->db->prepare( " ($formats_str)", $row );
+			$SQL .= ( $n_rows === $c ? '' : ',' );
+		}
+
+		// on duplicate handling
+		$SQL .= " ON DUPLICATE KEY UPDATE";
+
+		$c = 0;
+		foreach ( $fields as $field ) {
+			$c ++;
+			$SQL .= " `$field` = VALUES(`$field`)";
+			$SQL .= ( $n_fields === $c ? ';' : ',' );
+		}
+
+		return (bool) $this->db->query( $SQL );
+	}
+
+
+	/**
 	 * Takes an array of input data (single row) and plugs in missing defaults as set in the column_defaults() method
 	 *
 	 * @see column_defaults()
