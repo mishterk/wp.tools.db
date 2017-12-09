@@ -23,6 +23,7 @@ function _manually_load_plugin() {
 	require dirname( dirname( __FILE__ ) ) . '/src/Adaptor.php';
 	require dirname( dirname( __FILE__ ) ) . '/src/ModelBase.php';
 	require 'resources/class-test-model.php';
+	require 'resources/class-test-model-with-backticks.php';
 	require 'resources/class-test-model-composite-key.php';
 	require 'resources/class-factory.php';
 }

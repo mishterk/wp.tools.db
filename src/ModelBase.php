@@ -98,8 +98,9 @@ abstract class ModelBase {
 	 */
 	public function create_table() {
 		$result = $this->adaptor->dbDelta( $this->schema() );
+		$name   = $this->full_table_name();
 
-		return isset( $result[ $this->full_table_name() ] );
+		return isset( $result[ $name ] ) or isset( $result["`$name`"] );
 	}
 
 

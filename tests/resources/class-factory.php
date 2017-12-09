@@ -10,6 +10,13 @@ class ModelFactory {
 		return $model;
 	}
 
+
+	public static function getTestModelWithBackticks() {
+		$model = new Test_Model_With_Backticks();
+
+		return $model;
+	}
+
 	public static function getTestModelCompositeKey() {
 		$model = new Test_Model_Composite_key();
 
