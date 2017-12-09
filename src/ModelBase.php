@@ -46,7 +46,7 @@ abstract class ModelBase {
 
 
 	/**
-	 * Must return the table name without the prefix
+	 * Must return the table name without the prefix. Don't use backticks here – use them directly in your schema.
 	 *
 	 * @return string
 	 */
@@ -55,6 +55,7 @@ abstract class ModelBase {
 
 	/**
 	 * Returns an associative array of columns and their formats. e.g; ['col_name' => '%s', 'col2_name' => '%d']
+	 * Don't use backticks here – use them directly in your schema.
 	 *
 	 * @return array
 	 */
@@ -63,6 +64,7 @@ abstract class ModelBase {
 
 	/**
 	 * If columns have defaults, the required format here is ['col_name' => 'default_val']
+	 * Don't use backticks here – use them directly in your schema.
 	 *
 	 * Note: if using the timestamp_field() method to generate a timestamp field in your model's schema, it's not
 	 * necessary to set default values for that particular field.
@@ -82,7 +84,7 @@ abstract class ModelBase {
 
 
 	/**
-	 * Returns the full table name (with WP table prefix)
+	 * Returns the full table name (with WP table prefix). Don't use backticks here – use them directly in your schema.
 	 *
 	 * @return string
 	 */
@@ -113,10 +115,10 @@ abstract class ModelBase {
 	 */
 	public function drop_table( $force = false ) {
 		if ( $this->drop_on_deactivation OR $force ) {
-			return $this->db->query( "DROP TABLE {$this->full_table_name()};" );
+			return $this->db->query( "DROP TABLE `{$this->full_table_name()}`;" );
 		}
 
-		return $this->handle_error( '', "{$this->full_table_name()} table could not be dropped due to \$this->drop_on_deactivion set to true" );
+		return $this->handle_error( '', "{$this->full_table_name()} table could not be dropped due to \$this->drop_on_deactivation set to true" );
 	}
 
 
@@ -129,7 +131,7 @@ abstract class ModelBase {
 	 * @return string
 	 */
 	function timestamp_field( $name = 'created_at', $update = false ) {
-		return "$name TIMESTAMP DEFAULT CURRENT_TIMESTAMP" . ( $update ? " ON UPDATE CURRENT_TIMESTAMP" : '' );
+		return "`$name` TIMESTAMP DEFAULT CURRENT_TIMESTAMP" . ( $update ? " ON UPDATE CURRENT_TIMESTAMP" : '' );
 	}
 
 
@@ -221,7 +223,7 @@ abstract class ModelBase {
 		$n           = count( $values );
 		$formats_str = implode( ',', array_slice( $formats, 0, $n ) );
 
-		$SQL   = "INSERT INTO {$this->full_table_name()} ($fields_str) VALUES ($formats_str) ON DUPLICATE KEY UPDATE";
+		$SQL   = "INSERT INTO `{$this->full_table_name()}` ($fields_str) VALUES ($formats_str) ON DUPLICATE KEY UPDATE";
 		$query = $this->db->prepare( $SQL, $values );
 
 		$c = 0;
@@ -340,7 +342,7 @@ abstract class ModelBase {
 		$n_fields    = count( $rows[0] );
 		$formats_str = implode( ',', array_slice( $formats, 0, $n_fields ) );
 
-		$SQL = "INSERT INTO {$this->full_table_name()} ($fields_str) VALUES";
+		$SQL = "INSERT INTO `{$this->full_table_name()}` ($fields_str) VALUES";
 
 		$c = 0;
 		foreach ( $rows as $row ) {
@@ -377,7 +379,7 @@ abstract class ModelBase {
 		$n_fields    = count( $rows[0] );
 		$formats_str = implode( ',', array_slice( $formats, 0, $n_fields ) );
 
-		$SQL = "INSERT INTO {$this->full_table_name()} ($fields_str) VALUES";
+		$SQL = "INSERT INTO `{$this->full_table_name()}` ($fields_str) VALUES";
 
 		// prep data sets
 		$c = 0;
@@ -594,7 +596,7 @@ abstract class ModelBase {
 		}
 
 		$where = $this->build_where_clause( $args );
-		$query = "SELECT * FROM {$this->full_table_name()} $where";
+		$query = "SELECT * FROM `{$this->full_table_name()}` $where";
 
 		if ( $limit > 0 ) {
 			$query .= $this->db->prepare( " LIMIT %d", $limit );
@@ -636,7 +638,7 @@ abstract class ModelBase {
 		}
 
 		$where = $this->build_where_clause( $args );
-		$query = "DELETE FROM {$this->full_table_name()} $where;";
+		$query = "DELETE FROM `{$this->full_table_name()}` $where;";
 
 		return (bool) $this->db->query( $query );
 	}

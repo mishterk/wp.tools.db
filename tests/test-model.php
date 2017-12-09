@@ -54,9 +54,9 @@ class ModelTest extends WP_UnitTestCase {
 	function test_timestamp_field() {
 		$model = ModelFactory::getTestModel();
 		$this->assertInternalType( 'string', $model->timestamp_field() );
-		$this->assertSame( "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP", $model->timestamp_field() );
-		$this->assertSame( "custom_column_name TIMESTAMP DEFAULT CURRENT_TIMESTAMP", $model->timestamp_field( 'custom_column_name' ) );
-		$this->assertSame( "t TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP", $model->timestamp_field( 't', true ) );
+		$this->assertSame( "`created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP", $model->timestamp_field() );
+		$this->assertSame( "`custom_column_name` TIMESTAMP DEFAULT CURRENT_TIMESTAMP", $model->timestamp_field( 'custom_column_name' ) );
+		$this->assertSame( "`t` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP", $model->timestamp_field( 't', true ) );
 	}
 
 	function test_insert() {
